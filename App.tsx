@@ -9,7 +9,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { StatusBar, useColorScheme } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import Icon from 'react-native-vector-icons/FontAwesome';
 
 import RechercheScreen from './screens/RechercheScreen';
 import FavorisScreen from './screens/FavorisScreen';
@@ -41,6 +41,9 @@ function App() {
           options={{
             tabBarLabel: 'Recherche',
             title: 'Recherche',
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="search" size={size} color="blue" />
+          ),
           }}
         />
         <Tab.Screen 
@@ -49,6 +52,9 @@ function App() {
           options={{
             tabBarLabel: 'Favoris',
             title: 'Favoris',
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="heart" size={size} color="blue" />
+          ),
           }}
         />
         <Tab.Screen 
@@ -57,6 +63,9 @@ function App() {
           options={{
             tabBarLabel: 'Préférences',
             title: 'Préférences',
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="cog" size={size} color="blue" />
+          ),
           }}
         />
       </Tab.Navigator>
