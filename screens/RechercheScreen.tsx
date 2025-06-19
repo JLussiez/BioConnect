@@ -6,14 +6,17 @@ import {
   TextInput,
   TouchableOpacity,
   FlatList,
-  Alert,
   ActivityIndicator,
   SafeAreaView,
 } from 'react-native';
 import { getOperateurs, Operateur, SearchParams } from '../services/bioOperateursApi';
 import OperateurCard from '../components/OperateurCard';
 
-const RechercheScreen = () => {
+interface RechercheScreenProps {
+  navigation: any;
+}
+
+const RechercheScreen: React.FC<RechercheScreenProps> = ({ navigation }) => {
   // États pour les données
   const [operateurs, setOperateurs] = useState<Operateur[]>([]);
   const [loading, setLoading] = useState(false);
@@ -67,7 +70,9 @@ const RechercheScreen = () => {
       
     } catch (error) {
       console.error('Erreur recherche:', error);
-      Alert.alert('Erreur', 'Impossible de charger les opérateurs');
+      // Afficher l'erreur dans la console pour l'instant
+      setOperateurs([]);
+      setTotalOperateurs('0');
     }
     
     setLoading(false);
@@ -86,21 +91,7 @@ const RechercheScreen = () => {
   };
 
   const onOperateurPress = (operateur: Operateur) => {
-    const mainAddress = operateur.adressesOperateurs?.find(addr => addr.active) || operateur.adressesOperateurs?.[0];
-    const activites = operateur.activites?.map(a => a.nom).join(', ') || 'Non spécifié';
-    const productions = operateur.productions?.slice(0, 3).map(p => p.nom).join(', ') || 'Non spécifié';
-    
-    Alert.alert(
-      operateur.denominationcourante || operateur.raisonSociale,
-      `📍 ${mainAddress?.ville || 'Ville non disponible'}\n` +
-      `📞 ${operateur.telephoneNational || operateur.telephone || 'Téléphone non disponible'}\n` +
-      `✉️ ${operateur.email || 'Email non disponible'}\n` +
-      `👤 Gérant: ${operateur.gerant}\n` +
-      `🏢 Activités: ${activites}\n` +
-      `🌱 Productions: ${productions}` +
-      (operateur.mixite ? `\n🔄 Mixité: ${operateur.mixite}` : ''),
-      [{ text: 'Fermer', style: 'cancel' }]
-    );
+    navigation.navigate('OperateurDetails', { operateur });
   };
 
   const renderOperateur = ({ item }: { item: Operateur }) => (
@@ -115,6 +106,7 @@ const RechercheScreen = () => {
           <TextInput
             style={styles.searchInput}
             placeholder="Rechercher par nom ou code postal..."
+            placeholderTextColor="gray"
             value={searchText}
             onChangeText={setSearchText}
             returnKeyType="search"
