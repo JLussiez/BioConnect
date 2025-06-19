@@ -2,6 +2,22 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
 const RechercheScreen = () => {
+  const [totalOperateurs, setTotalOperateurs] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await getOperateurs();
+        console.log(response);
+        setTotalOperateurs(response.nbTotal);
+      } catch (error) {
+        console.error('Erreur:', error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Recherche</Text>
