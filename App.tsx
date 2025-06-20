@@ -45,12 +45,12 @@ function App() {
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       <Tab.Navigator
         screenOptions={{
-          tabBarActiveTintColor: '#007AFF',
+          tabBarActiveTintColor: '#4CAF50',
           tabBarInactiveTintColor: '#8E8E93',
           headerStyle: {
-            backgroundColor: '#F2F2F7',
+            backgroundColor: '#fff',
           },
-          headerTintColor: '#000',
+          headerTintColor: '#2E7D32',
           headerTitleStyle: {
             fontWeight: 'bold',
           },
@@ -62,7 +62,7 @@ function App() {
             tabBarLabel: 'Recherche',
             title: 'Recherche',
           tabBarIcon: ({ color, size }) => (
-            <Icon name="search" size={size} color="blue" />
+            <Icon name="search" size={size} color={color} />
           ),
           }}
         />
@@ -73,7 +73,7 @@ function App() {
             tabBarLabel: 'Favoris',
             title: 'Favoris',
           tabBarIcon: ({ color, size }) => (
-            <Icon name="heart" size={size} color="blue" />
+            <Icon name="heart" size={size} color={color} />
           ),
           }}
         />
@@ -84,7 +84,7 @@ function App() {
             tabBarLabel: 'Préférences',
             title: 'Préférences',
           tabBarIcon: ({ color, size }) => (
-            <Icon name="cog" size={size} color="blue" />
+            <Icon name="cog" size={size} color={color} />
           ),
           }}
         />

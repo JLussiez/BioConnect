@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Operateur } from '../services/bioOperateursApi';
+import { favoritesDB } from '../services/favoritesDatabase';
+import Icon from 'react-native-vector-icons/FontAwesome';
 import {
   View,
   Text,
@@ -37,14 +39,42 @@ const OperateurDetailsScreen = ({ route, navigation }: any) => {
     }
   };
 
-  const toggleFavorite = () => {
-    setIsFavorite(!isFavorite);
-    Alert.alert(
-      isFavorite ? 'Retiré des favoris' : 'Ajouté aux favoris',
-      isFavorite 
-        ? `${operateur.denominationcourante || operateur.raisonSociale} a été retiré de vos favoris`
-        : `${operateur.denominationcourante || operateur.raisonSociale} a été ajouté à vos favoris`
-    );
+  // Vérifier si l'opérateur est déjà en favori au chargement
+  useEffect(() => {
+    checkFavoriteStatus();
+  }, []);
+
+  const checkFavoriteStatus = async () => {
+    try {
+      await favoritesDB.initDatabase();
+      const isAlreadyFavorite = await favoritesDB.isFavorite(operateur.id);
+      setIsFavorite(isAlreadyFavorite);
+    } catch (error) {
+      console.error('Erreur lors de la vérification des favoris:', error);
+    }
+  };
+
+  const toggleFavorite = async () => {
+    try {
+      if (isFavorite) {
+        await favoritesDB.removeFavorite(operateur.id);
+        setIsFavorite(false);
+        Alert.alert(
+          'Retiré des favoris',
+          `${operateur.denominationcourante || operateur.raisonSociale} a été retiré de vos favoris`
+        );
+      } else {
+        await favoritesDB.addFavorite(operateur);
+        setIsFavorite(true);
+        Alert.alert(
+          'Ajouté aux favoris',
+          `${operateur.denominationcourante || operateur.raisonSociale} a été ajouté à vos favoris`
+        );
+      }
+    } catch (error) {
+      console.error('Erreur lors de la gestion des favoris:', error);
+      Alert.alert('Erreur', 'Impossible de modifier les favoris');
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -67,12 +97,18 @@ const OperateurDetailsScreen = ({ route, navigation }: any) => {
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Text style={styles.backButtonText}>← Retour</Text>
+            <View style={styles.backButtonContent}>
+              <Icon name="arrow-left" size={16} color="#4CAF50" />
+              <Text style={styles.backButtonText}>Retour</Text>
+            </View>
           </TouchableOpacity>
           <TouchableOpacity onPress={toggleFavorite} style={styles.favoriteButton}>
-            <Text style={styles.favoriteButtonText}>
-              {isFavorite ? '★ Favori' : '☆ Ajouter'}
-            </Text>
+            <View style={styles.favoriteButtonContent}>
+              <Icon name={isFavorite ? "star" : "star-o"} size={14} color="#fff" />
+              <Text style={styles.favoriteButtonText}>
+                {isFavorite ? 'Favori' : 'Ajouter'}
+              </Text>
+            </View>
           </TouchableOpacity>
         </View>
         <Text style={styles.title}>Détails de l'opérateur</Text>
@@ -96,7 +132,10 @@ const OperateurDetailsScreen = ({ route, navigation }: any) => {
 
         {/* Contact */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>📞 CONTACT</Text>
+          <View style={styles.sectionTitleContainer}>
+            <Icon name="phone" size={16} color="#2E7D32" />
+            <Text style={styles.sectionTitle}>CONTACT</Text>
+          </View>
           <View style={styles.card}>
             {(operateur.telephoneNational || operateur.telephone) && (
               <TouchableOpacity 
@@ -132,7 +171,10 @@ const OperateurDetailsScreen = ({ route, navigation }: any) => {
         {/* Adresses */}
         {operateur.adressesOperateurs && operateur.adressesOperateurs.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>📍 ADRESSES</Text>
+            <View style={styles.sectionTitleContainer}>
+              <Icon name="map-marker" size={16} color="#2E7D32" />
+              <Text style={styles.sectionTitle}>ADRESSES</Text>
+            </View>
             {operateur.adressesOperateurs.map((adresse: any, index: number) => (
               <View key={index} style={styles.card}>
                 <Text style={styles.addressText}>
@@ -157,7 +199,10 @@ const OperateurDetailsScreen = ({ route, navigation }: any) => {
         {/* Sites Web */}
         {operateur.sitesWeb && operateur.sitesWeb.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>🌐 SITES WEB</Text>
+            <View style={styles.sectionTitleContainer}>
+              <Icon name="globe" size={16} color="#2E7D32" />
+              <Text style={styles.sectionTitle}>SITES WEB</Text>
+            </View>
             <View style={styles.card}>
               {operateur.sitesWeb.map((site: any, index: number) => (
                 <TouchableOpacity 
@@ -176,7 +221,10 @@ const OperateurDetailsScreen = ({ route, navigation }: any) => {
         {/* Activités */}
         {operateur.activites && operateur.activites.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>🏭 ACTIVITÉS</Text>
+            <View style={styles.sectionTitleContainer}>
+              <Icon name="industry" size={16} color="#2E7D32" />
+              <Text style={styles.sectionTitle}>ACTIVITÉS</Text>
+            </View>
             <View style={styles.card}>
               {operateur.activites.map((activite: any) => (
                 <View key={activite.id} style={styles.activityItem}>
@@ -193,7 +241,10 @@ const OperateurDetailsScreen = ({ route, navigation }: any) => {
         {/* Productions */}
         {operateur.productions && operateur.productions.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>🌾 PRODUCTIONS ({operateur.productions.length})</Text>
+            <View style={styles.sectionTitleContainer}>
+              <Icon name="leaf" size={16} color="#2E7D32" />
+              <Text style={styles.sectionTitle}>PRODUCTIONS ({operateur.productions.length})</Text>
+            </View>
             <View style={styles.card}>
               {operateur.productions.map((production: any) => (
                 <View key={production.id} style={styles.productionItem}>
@@ -210,7 +261,10 @@ const OperateurDetailsScreen = ({ route, navigation }: any) => {
         {/* Certificats */}
         {operateur.certificats && operateur.certificats.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>📜 CERTIFICATS</Text>
+            <View style={styles.sectionTitleContainer}>
+              <Icon name="certificate" size={16} color="#2E7D32" />
+              <Text style={styles.sectionTitle}>CERTIFICATS</Text>
+            </View>
             {operateur.certificats.map((certificat: any, index: number) => (
               <View key={index} style={styles.certificateCard}>
                 <Text style={styles.certificateName}>
@@ -246,7 +300,10 @@ const OperateurDetailsScreen = ({ route, navigation }: any) => {
 
         {/* Informations administratives */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>📋 INFORMATIONS ADMINISTRATIVES</Text>
+          <View style={styles.sectionTitleContainer}>
+            <Icon name="clipboard" size={16} color="#2E7D32" />
+            <Text style={styles.sectionTitle}>INFORMATIONS ADMINISTRATIVES</Text>
+          </View>
           <View style={styles.card}>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>SIRET</Text>
@@ -301,6 +358,11 @@ const styles = StyleSheet.create({
   backButton: {
     padding: 4,
   },
+  backButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
   backButtonText: {
     fontSize: 16,
     color: '#4CAF50',
@@ -311,6 +373,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
+  },
+  favoriteButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   favoriteButtonText: {
     fontSize: 14,
@@ -329,11 +396,16 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 20,
   },
+  sectionTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
   sectionTitle: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#2E7D32',
-    marginBottom: 12,
   },
   card: {
     backgroundColor: '#fff',
