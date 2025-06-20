@@ -62,7 +62,7 @@ function App() {
             tabBarLabel: 'Recherche',
             title: 'Recherche',
           tabBarIcon: ({ color, size }) => (
-            <Icon name="search" size={size} color="blue" />
+            <Icon name="search" size={size} color="green" />
           ),
           }}
         />
@@ -73,7 +73,7 @@ function App() {
             tabBarLabel: 'Favoris',
             title: 'Favoris',
           tabBarIcon: ({ color, size }) => (
-            <Icon name="heart" size={size} color="blue" />
+            <Icon name="heart" size={size} color="green" />
           ),
           }}
         />
@@ -84,7 +84,7 @@ function App() {
             tabBarLabel: 'Préférences',
             title: 'Préférences',
           tabBarIcon: ({ color, size }) => (
-            <Icon name="cog" size={size} color="blue" />
+            <Icon name="cog" size={size} color="green" />
           ),
           }}
         />
