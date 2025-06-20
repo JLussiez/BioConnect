@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   SafeAreaView,
 } from 'react-native';
+import Icon from 'react-native-vector-icons/FontAwesome';
 import { getOperateurs, Operateur, SearchParams } from '../services/bioOperateursApi';
 import OperateurCard from '../components/OperateurCard';
 import OpenStreetMapView from '../components/OpenStreetMapView';
@@ -76,7 +77,6 @@ const RechercheScreen: React.FC<RechercheScreenProps> = ({ navigation }) => {
       
     } catch (error) {
       console.error('Erreur recherche:', error);
-      // Afficher l'erreur dans la console pour l'instant
       setOperateurs([]);
       setTotalOperateurs('0');
     }
@@ -114,6 +114,7 @@ const RechercheScreen: React.FC<RechercheScreenProps> = ({ navigation }) => {
         ]}
         onPress={() => setViewMode('list')}
       >
+        <Icon name="list" size={16} color={viewMode === 'list' ? '#fff' : '#666'} />
         <Text style={[
           styles.viewModeButtonText,
           viewMode === 'list' && styles.viewModeButtonTextActive
@@ -129,6 +130,7 @@ const RechercheScreen: React.FC<RechercheScreenProps> = ({ navigation }) => {
         ]}
         onPress={() => setViewMode('map')}
       >
+        <Icon name="map" size={16} color={viewMode === 'map' ? '#fff' : '#666'} />
         <Text style={[
           styles.viewModeButtonText,
           viewMode === 'map' && styles.viewModeButtonTextActive
@@ -144,10 +146,11 @@ const RechercheScreen: React.FC<RechercheScreenProps> = ({ navigation }) => {
       {/* Barre de recherche simple */}
       <View style={styles.searchHeader}>
         <View style={styles.searchContainer}>
+          <Icon name="search" size={16} color="#666" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
             placeholder="Rechercher par nom ou code postal..."
-            placeholderTextColor="gray"
+            placeholderTextColor="#999"
             value={searchText}
             onChangeText={setSearchText}
             returnKeyType="search"
@@ -155,7 +158,7 @@ const RechercheScreen: React.FC<RechercheScreenProps> = ({ navigation }) => {
           />
           {searchText.length > 0 && (
             <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
-              <Text style={styles.clearButtonText}>✕</Text>
+              <Icon name="times" size={14} color="#666" />
             </TouchableOpacity>
           )}
         </View>
@@ -165,6 +168,7 @@ const RechercheScreen: React.FC<RechercheScreenProps> = ({ navigation }) => {
           onPress={() => searchOperateurs(true)}
           disabled={loading}
         >
+          <Icon name="search" size={14} color="#fff" />
           <Text style={styles.searchButtonText}>
             {loading ? 'Recherche...' : 'Rechercher'}
           </Text>
@@ -202,6 +206,7 @@ const RechercheScreen: React.FC<RechercheScreenProps> = ({ navigation }) => {
           ListEmptyComponent={
             !loading ? (
               <View style={styles.emptyContainer}>
+                <Icon name="search" size={48} color="#ccc" />
                 <Text style={styles.emptyText}>Aucun opérateur trouvé</Text>
                 <Text style={styles.emptySubtext}>
                   Essayez avec un autre terme de recherche
@@ -220,6 +225,7 @@ const RechercheScreen: React.FC<RechercheScreenProps> = ({ navigation }) => {
           ) : (
             !loading && (
               <View style={styles.emptyMapContainer}>
+                <Icon name="map-o" size={48} color="#ccc" />
                 <Text style={styles.emptyText}>Aucun opérateur à afficher sur la carte</Text>
                 <Text style={styles.emptySubtext}>
                   Effectuez une recherche pour voir les opérateurs
@@ -262,6 +268,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginBottom: 12,
   },
+  searchIcon: {
+    marginRight: 8,
+  },
   searchInput: {
     flex: 1,
     paddingVertical: 12,
@@ -272,17 +281,15 @@ const styles = StyleSheet.create({
     padding: 8,
     marginLeft: 8,
   },
-  clearButtonText: {
-    color: '#666',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
   searchButton: {
     backgroundColor: '#4CAF50',
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 25,
     alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
   },
   searchButtonText: {
     color: '#fff',
@@ -304,10 +311,13 @@ const styles = StyleSheet.create({
   },
   viewModeButton: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 6,
-    alignItems: 'center',
+    gap: 6,
   },
   viewModeButtonActive: {
     backgroundColor: '#4CAF50',
@@ -381,6 +391,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#333',
     marginBottom: 8,
+    marginTop: 16,
     textAlign: 'center',
   },
   emptySubtext: {
