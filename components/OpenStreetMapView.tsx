@@ -1,169 +1,186 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
-import WebView from 'react-native-webview';
+import { WebView } from 'react-native-webview';
 import { Operateur } from '../services/bioOperateursApi';
 
 interface OpenStreetMapViewProps {
   operateurs: Operateur[];
-  userLocation?: { latitude: number; longitude: number };
-  onMarkerPress?: (operateur: Operateur) => void;
+  initialRegion?: {
+    latitude: number;
+    longitude: number;
+    zoom: number;
+  };
 }
 
 const OpenStreetMapView: React.FC<OpenStreetMapViewProps> = ({
   operateurs,
-  userLocation,
-  onMarkerPress,
+  initialRegion = { latitude: 46.603354, longitude: 1.888334, zoom: 6 }, // Centre de la France
 }) => {
-  // Générer les marqueurs pour les opérateurs
-  const generateMarkers = () => {
-    return operateurs
-      .filter(op => op.adresseOperateur?.lat && op.adresseOperateur?.long)
-      .map(operateur => ({
-        lat: operateur.adresseOperateur!.lat!,
-        lng: operateur.adresseOperateur!.long!,
-        title: operateur.denominationcourante || operateur.raisonSociale,
-        description: `${operateur.adresseOperateur!.ville} - ${operateur.categories?.join(', ') || ''}`,
-        id: operateur.numeroBio,
-      }));
+  const webViewRef = useRef<WebView>(null);
+
+  // Préparer les marqueurs pour la carte
+  const getMarkersData = () => {
+    const markers: any[] = [];
+    
+    operateurs.forEach((operateur) => {
+      operateur.adressesOperateurs.forEach((adresse) => {
+        if (adresse.lat && adresse.long) {
+          markers.push({
+            id: `${operateur.numeroBio}-${adresse.id}`,
+            numeroBio: operateur.numeroBio,
+            latitude: adresse.lat,
+            longitude: adresse.long,
+            title: operateur.denominationcourante || operateur.raisonSociale,
+            subtitle: `${adresse.lieu}, ${adresse.codePostal} ${adresse.ville}`,
+            activites: operateur.activites.map(a => a.nom).join(', '),
+          });
+        }
+      });
+    });
+    
+    return markers;
   };
 
-  // Calculer le centre et le zoom optimal
-  const getMapCenter = () => {
-    if (userLocation) {
-      return { lat: userLocation.latitude, lng: userLocation.longitude, zoom: 12 };
-    }
+  // HTML et JavaScript pour la carte Leaflet
+  const getMapHTML = () => {
+    const markers = getMarkersData();
     
-    const markers = generateMarkers();
-    if (markers.length === 0) {
-      return { lat: 46.603354, lng: 1.888334, zoom: 6 }; // Centre de la France
-    }
-    
-    const lats = markers.map(m => m.lat);
-    const lngs = markers.map(m => m.lng);
-    const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2;
-    const centerLng = (Math.min(...lngs) + Math.max(...lngs)) / 2;
-    
-    return { lat: centerLat, lng: centerLng, zoom: 10 };
-  };
-
-  const center = getMapCenter();
-  const markers = generateMarkers();
-
-  // HTML avec Leaflet.js pour OpenStreetMap
-  const mapHtml = `
+    return `
     <!DOCTYPE html>
     <html>
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        <title>Carte des Opérateurs Bio</title>
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+              integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+              crossorigin=""/>
         <style>
-            body { margin: 0; padding: 0; }
-            #map { height: 100vh; width: 100vw; }
-            .custom-popup {
+            body {
+                margin: 0;
+                padding: 0;
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            }
+            #map {
+                height: 100vh;
+                width: 100vw;
+            }
+            .custom-popup {
+                font-size: 14px;
+                line-height: 1.4;
             }
             .popup-title {
                 font-weight: bold;
                 color: #2E7D32;
                 margin-bottom: 5px;
             }
-            .popup-description {
+            .popup-address {
                 color: #666;
-                font-size: 14px;
+                margin-bottom: 5px;
+            }
+            .popup-activities {
+                color: #4CAF50;
+                font-size: 12px;
             }
         </style>
     </head>
     <body>
         <div id="map"></div>
+        
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+                integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+                crossorigin=""></script>
+        
         <script>
             // Initialiser la carte
-            var map = L.map('map').setView([${center.lat}, ${center.lng}], ${center.zoom});
+            var map = L.map('map').setView([${initialRegion.latitude}, ${initialRegion.longitude}], ${initialRegion.zoom});
             
-            // Ajouter les tuiles OpenStreetMap
+            // Ajouter la couche OpenStreetMap
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors',
-                maxZoom: 19
+                attribution: '© OpenStreetMap contributors'
             }).addTo(map);
             
-            // Icône personnalisée pour les opérateurs bio
-            var bioIcon = L.divIcon({
-                className: 'custom-div-icon',
+            // Icône personnalisée pour les marqueurs
+            var customIcon = L.divIcon({
+                className: 'custom-marker',
                 html: '<div style="background-color: #4CAF50; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>',
                 iconSize: [20, 20],
                 iconAnchor: [10, 10]
             });
             
-            // Icône pour la position utilisateur
-            var userIcon = L.divIcon({
-                className: 'custom-div-icon',
-                html: '<div style="background-color: #2196F3; width: 16px; height: 16px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>',
-                iconSize: [16, 16],
-                iconAnchor: [8, 8]
+            // Ajouter les marqueurs
+            var markers = ${JSON.stringify(markers)};
+            var bounds = L.latLngBounds();
+            
+            markers.forEach(function(markerData) {
+                var marker = L.marker([markerData.latitude, markerData.longitude], { icon: customIcon })
+                    .addTo(map);
+                
+                // Contenu du popup
+                var popupContent = '<div class="custom-popup">' +
+                    '<div class="popup-title">' + markerData.title + '</div>' +
+                    '<div class="popup-address">' + markerData.subtitle + '</div>' +
+                    '<div class="popup-activities">' + markerData.activites + '</div>' +
+                    '</div>';
+                
+                marker.bindPopup(popupContent);
+                
+                                 // Le marqueur affiche juste le popup au clic
+                 // Pas de redirection vers les détails
+                
+                // Ajouter à la bounding box
+                bounds.extend([markerData.latitude, markerData.longitude]);
             });
             
-            // Ajouter la position utilisateur si disponible
-            ${userLocation ? `
-            L.marker([${userLocation.latitude}, ${userLocation.longitude}], {icon: userIcon})
-                .addTo(map)
-                .bindPopup('<div class="custom-popup"><div class="popup-title">📍 Ma position</div></div>');
-            ` : ''}
-            
-            // Ajouter les marqueurs des opérateurs
-            ${markers.map(marker => `
-            L.marker([${marker.lat}, ${marker.lng}], {icon: bioIcon})
-                .addTo(map)
-                .bindPopup(\`<div class="custom-popup">
-                    <div class="popup-title">${marker.title.replace(/'/g, "\\'")}</div>
-                    <div class="popup-description">${marker.description.replace(/'/g, "\\'")}</div>
-                </div>\`)
-                .on('click', function() {
-                    window.ReactNativeWebView.postMessage(JSON.stringify({
-                        type: 'markerPress',
-                        operatorId: '${marker.id}'
-                    }));
-                });
-            `).join('')}
-            
-            // Ajuster la vue pour inclure tous les marqueurs
-            ${markers.length > 0 ? `
-            var group = new L.featureGroup([
-                ${markers.map(marker => `L.marker([${marker.lat}, ${marker.lng}])`).join(',')}
-                ${userLocation ? `, L.marker([${userLocation.latitude}, ${userLocation.longitude}])` : ''}
-            ]);
-            if (group.getLayers().length > 1) {
-                map.fitBounds(group.getBounds().pad(0.1));
+            // Ajuster la vue pour montrer tous les marqueurs
+            if (markers.length > 0) {
+                map.fitBounds(bounds, { padding: [20, 20] });
             }
-            ` : ''}
+            
+            // Gérer les messages de React Native
+            document.addEventListener('message', function(e) {
+                var data = JSON.parse(e.data);
+                if (data.type === 'centerOnLocation') {
+                    map.setView([data.latitude, data.longitude], data.zoom || 12);
+                }
+            });
         </script>
     </body>
     </html>
-  `;
+    `;
+  };
 
-  const handleMessage = (event: any) => {
-    try {
-      const data = JSON.parse(event.nativeEvent.data);
-      if (data.type === 'markerPress' && onMarkerPress) {
-        const operateur = operateurs.find(op => op.numeroBio === data.operatorId);
-        if (operateur) {
-          onMarkerPress(operateur);
-        }
-      }
-    } catch (error) {
-      console.error('Erreur parsing message WebView:', error);
-    }
+  // Plus besoin de gérer les messages WebView
+  const handleWebViewMessage = (event: any) => {
+    // Aucune action nécessaire, les marqueurs affichent juste les popups
+  };
+
+  // Méthode pour centrer la carte sur une localisation
+  const centerOnLocation = (latitude: number, longitude: number, zoom: number = 12) => {
+    const message = JSON.stringify({
+      type: 'centerOnLocation',
+      latitude,
+      longitude,
+      zoom
+    });
+    
+    webViewRef.current?.postMessage(message);
   };
 
   return (
     <View style={styles.container}>
       <WebView
-        source={{ html: mapHtml }}
-        style={styles.webview}
-        onMessage={handleMessage}
+        ref={webViewRef}
+        source={{ html: getMapHTML() }}
+        style={styles.webView}
+        onMessage={handleWebViewMessage}
         javaScriptEnabled={true}
         domStorageEnabled={true}
         startInLoadingState={true}
+        scalesPageToFit={true}
+        scrollEnabled={false}
+        showsHorizontalScrollIndicator={false}
+        showsVerticalScrollIndicator={false}
       />
     </View>
   );
@@ -173,7 +190,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  webview: {
+  webView: {
     flex: 1,
   },
 });
