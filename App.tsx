@@ -8,14 +8,34 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar, useColorScheme } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
 import RechercheScreen from './screens/RechercheScreen';
+import OperateurDetailsScreen from './screens/OperateurDetailsScreen';
 import FavorisScreen from './screens/FavorisScreen';
 import PreferencesScreen from './screens/PreferencesScreen';
 
 const Tab = createBottomTabNavigator();
+const RechercheStack = createNativeStackNavigator();
+
+function RechercheStackNavigator() {
+  return (
+    <RechercheStack.Navigator>
+      <RechercheStack.Screen 
+        name="RechercheMain" 
+        component={RechercheScreen}
+        options={{ headerShown: false }}
+      />
+      <RechercheStack.Screen 
+        name="OperateurDetails" 
+        component={OperateurDetailsScreen}
+        options={{ headerShown: false }}
+      />
+    </RechercheStack.Navigator>
+  );
+}
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
@@ -37,7 +57,7 @@ function App() {
         }}>
         <Tab.Screen 
           name="Recherche" 
-          component={RechercheScreen}
+          component={RechercheStackNavigator}
           options={{
             tabBarLabel: 'Recherche',
             title: 'Recherche',
@@ -72,6 +92,5 @@ function App() {
     </NavigationContainer>
   );
 }
-
 
 export default App;
