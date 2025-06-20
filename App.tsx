@@ -8,14 +8,34 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar, useColorScheme } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import Icon from 'react-native-vector-icons/FontAwesome';
 
 import RechercheScreen from './screens/RechercheScreen';
+import OperateurDetailsScreen from './screens/OperateurDetailsScreen';
 import FavorisScreen from './screens/FavorisScreen';
 import PreferencesScreen from './screens/PreferencesScreen';
 
 const Tab = createBottomTabNavigator();
+const RechercheStack = createNativeStackNavigator();
+
+function RechercheStackNavigator() {
+  return (
+    <RechercheStack.Navigator>
+      <RechercheStack.Screen 
+        name="RechercheMain" 
+        component={RechercheScreen}
+        options={{ headerShown: false }}
+      />
+      <RechercheStack.Screen 
+        name="OperateurDetails" 
+        component={OperateurDetailsScreen}
+        options={{ headerShown: false }}
+      />
+    </RechercheStack.Navigator>
+  );
+}
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
@@ -25,22 +45,25 @@ function App() {
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       <Tab.Navigator
         screenOptions={{
-          tabBarActiveTintColor: '#007AFF',
+          tabBarActiveTintColor: '#4CAF50',
           tabBarInactiveTintColor: '#8E8E93',
           headerStyle: {
-            backgroundColor: '#F2F2F7',
+            backgroundColor: '#fff',
           },
-          headerTintColor: '#000',
+          headerTintColor: '#2E7D32',
           headerTitleStyle: {
             fontWeight: 'bold',
           },
         }}>
         <Tab.Screen 
           name="Recherche" 
-          component={RechercheScreen}
+          component={RechercheStackNavigator}
           options={{
             tabBarLabel: 'Recherche',
             title: 'Recherche',
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="search" size={size} color={color} />
+          ),
           }}
         />
         <Tab.Screen 
@@ -49,6 +72,9 @@ function App() {
           options={{
             tabBarLabel: 'Favoris',
             title: 'Favoris',
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="heart" size={size} color={color} />
+          ),
           }}
         />
         <Tab.Screen 
@@ -57,6 +83,9 @@ function App() {
           options={{
             tabBarLabel: 'Préférences',
             title: 'Préférences',
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="cog" size={size} color={color} />
+          ),
           }}
         />
       </Tab.Navigator>
